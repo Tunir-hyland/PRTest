@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔍 GitHub PR Review Agent</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+    header { text-align: center; margin-bottom: 40px; }
+    header h1 { color: #58a6ff; font-size: 32px; margin-bottom: 8px; }
+    header p { color: #8b949e; }
+    .input-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 30px;
+    }
+    .input-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; color: #c9d1d9; font-size: 14px; }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: #58a6ff; }
+    .hint { font-size: 12px; color: #8b949e; margin-top: 4px; }
+    .btn {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #2ea043; }
+    .btn:disabled { background: #30363d; cursor: not-allowed; }
+    .examples { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .example-chip {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #58a6ff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .example-chip:hover { background: #30363d; }
+    .loader { text-align: center; padding: 40px; display: none; }
+    .spinner {
+      border: 3px solid #30363d;
+      border-top: 3px solid #58a6ff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .error {
+      background: #490202;
+      border: 1px solid #da3633;
+      color: #ff7b72;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .results { display: none; }
+    .section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .section h2 { color: #79c0ff; font-size: 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .stat-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; text-align: center; }
+    .stat-box .value { font-size: 24px; font-weight: 700; color: #58a6ff; }
+    .stat-box .label { font-size: 12px; color: #8b949e; text-transform: uppercase; }
+    .stat-box .value.green { color: #3fb950; }
+    .stat-box .value.red { color: #f85149; }
+    .item {
+      background: #0d1117;
+      border-left: 3px solid #30363d;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .item.critical { border-left-color: #f85149; }
+    .item.warning { border-left-color: #d29922; }
+    .item.info { border-left-color: #58a6ff; }
+    .item .file { color: #8b949e; font-size: 12px; font-family: monospace; }
+    .item .msg { font-weight: 600; }
+    .item code { background: #161b22; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #ff7b72; display: block; margin-top: 6px; overflow-x: auto; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+    .badge.critical { background: #490202; color: #ff7b72; }
+    .badge.warning { background: #3d2f00; color: #e3b341; }
+    .badge.info { background: #0c2d6b; color: #79c0ff; }
+    .empty { color: #3fb950; padding: 8px 0; }
+    .file-tag { display: inline-block; background: #21262d; border-radius: 12px; padding: 2px 10px; font-size: 12px; margin: 2px; }
+    .release-notes { background: #0d1117; border-radius: 8px; padding: 16px; }
+    .release-notes h3 { color: #58a6ff; margin-bottom: 12px; }
+    .release-notes ul { margin-left: 20px; margin-bottom: 12px; }
+    .release-notes .cat { font-weight: 700; color: #79c0ff; margin-top: 8px; }
+    .pr-title { color: #58a6ff; text-decoration: none; }
+    .pr-title:hover { text-decoration: underline; }
+    .meta-row { color: #8b949e; font-size: 14px; margin-top: 4px; }
+    .copy-btn { background: #21262d; border: 1px solid #30363d; color: #58a6ff; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; float: right; }
+    .copy-btn:hover { background: #30363d; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔍 GitHub PR Review Agent</h1>
+      <p>Automated code review, bug detection &amp; release notes</p>
+    </header>
+
+    <div class="input-card">
+      <div class="input-group">
+        <label for="prUrl">GitHub Pull Request URL</label>
+        <input type="text" id="prUrl" placeholder="https://github.com/owner/repo/pull/123" />
+        <div class="examples">
+          <span class="example-chip" onclick="setExample('https://github.com/facebook/react/pull/25000')">facebook/react #25000</span>
+          <span class="example-chip" onclick="setExample('https://github.com/microsoft/vscode/pull/200000')">microsoft/vscode #200000</span>
+          <span class="example-chip" onclick="setExample('https://github.com/pallets/flask/pull/5000')">pallets/flask #5000</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label for="token">GitHub Token <span style="font-weight:400;color:#8b949e">(optional — for private repos &amp; higher rate limits)</span></label>
+        <input type="password" id="token" placeholder="ghp_..." />
+        <div class="hint">Token stays in your browser and is only sent to your local server. Get one at github.com/settings/tokens</div>
+      </div>
+      <button class="btn" id="reviewBtn" onclick="runReview()">🚀 Review Pull Request</button>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p>Analyzing pull request…</p>
+    </div>
+
+    <div class="results" id="results"></div>
+  </div>
+
+  <script>
+    function setExample(url) { document.getElementById('prUrl').value = url; }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    async function runReview() {
+      const prUrl = document.getElementById('prUrl').value.trim();
+      const token = document.getElementById('token').value.trim();
+      const errorEl = document.getElementById('error');
+      const loaderEl = document.getElementById('loader');
+      const resultsEl = document.getElementById('results');
+      const btn = document.getElementById('reviewBtn');
+
+      errorEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+
+      if (!prUrl) { showError('Please enter a GitHub PR URL'); return; }
+
+      loaderEl.style.display = 'block';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prUrl, token: token || undefined }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        render(data);
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        loaderEl.style.display = 'none';
+        btn.disabled = false;
+      }
+    }
+
+    function showError(msg) {
+      const e = document.getElementById('error');
+      e.textContent = '❌ ' + msg;
+      e.style.display = 'block';
+    }
+
+    function render(data) {
+      const { meta, analysis, bugs, suggestions, todos, largeMethods, duplicates, releaseNotes } = data;
+      let html = '';
+
+      // Summary
+      const fileTypes = Object.entries(analysis.file_types).sort((a, b) => b[1] - a[1])
+        .map(([ext, n]) => `<span class="file-tag">.${esc(ext)} × ${n}</span>`).join(' ');
+      html += `<div class="section">
+        <h2>📊 Summary</h2>
+        <a class="pr-title" href="${esc(meta.url)}" target="_blank">${esc(meta.title)}</a>
+        <div class="meta-row">by <b>${esc(meta.author)}</b> · state: <b>${esc(meta.state)}</b> · ${esc(meta.owner)}/${esc(meta.repo)} #${meta.number}</div>
+        <div class="stat-grid" style="margin-top:16px">
+          <div class="stat-box"><div class="value">${analysis.total_files}</div><div class="label">Files</div></div>
+          <div class="stat-box"><div class="value green">+${analysis.additions}</div><div class="label">Added</div></div>
+          <div class="stat-box"><div class="value red">-${analysis.deletions}</div><div class="label">Removed</div></div>
+        </div>
+        <div>${fileTypes}</div>
+      </div>`;
+
+      // Bugs
+      const crit = bugs.filter((b) => b.severity === 'critical');
+      const warn = bugs.filter((b) => b.severity === 'warning');
+      const info = bugs.filter((b) => b.severity === 'info');
+      html += `<div class="section"><h2>🐛 Potential Bugs
+        ${crit.length ? `<span class="badge critical">${crit.length} critical</span>` : ''}
+        ${warn.length ? `<span class="badge warning">${warn.length} warning</span>` : ''}
+        ${info.length ? `<span class="badge info">${info.length} info</span>` : ''}</h2>`;
+      if (bugs.length) {
+        for (const b of [...crit, ...warn, ...info]) {
+          html += `<div class="item ${b.severity}">
+            <div class="file">${esc(b.file)}</div>
+            <div class="msg">${esc(b.message)}</div>
+            <code>${esc(b.code)}</code></div>`;
+        }
+      } else {
+        html += `<div class="empty">✅ No obvious bugs detected!</div>`;
+      }
+      html += `</div>`;
+
+      // Suggestions
+      html += `<div class="section"><h2>💡 Improvement Suggestions</h2>`;
+      if (suggestions.length) {
+        for (const s of suggestions) {
+          html += `<div class="item info"><div class="file">${esc(s.file)} · ${esc(s.category)}</div><div class="msg">${esc(s.suggestion)}</div></div>`;
+        }
+      } else {
+        html += `<div class="empty">✅ Code looks good!</div>`;
+      }
+      html += `</div>`;
+
+      // TODOs
+      html += `<div class="section"><h2>📝 TODOs &amp; Notes</h2>`;
+      if (todos.length) {
+        for (const t of todos) {
+          html += `<div class="item info"><div class="file">${esc(t.file)}</div><div class="msg">[${esc(t.type)}] ${esc(t.message)}</div></div>`;
+        }
+      } else {
+        html += `<div class="empty">✅ No TODOs found</div>`;
+      }
+      html += `</div>`;
+
+      // Large methods
+      html += `<div class="section"><h2>📏 Large Methods</h2>`;
+      if (largeMethods.length) {
+        for (const m of largeMethods) {
+          html += `<div class="item warning"><div class="file">${esc(m.file)}</div><div class="msg">~${m.estimated_lines} lines: <code>${esc(m.method)}</code></div></div>`;
+        }
+      } else {
+        html += `<div class="empty">✅ No large methods detected</div>`;
+      }
+      html += `</div>`;
+
+      // Duplicates
+      html += `<div class="section"><h2>🔄 Duplicated Code</h2>`;
+      if (duplicates.length) {
+        for (const d of duplicates.slice(0, 10)) {
+          html += `<div class="item warning"><div class="file">${esc(d.locations.join(', '))}</div><code>${esc(d.block)}</code></div>`;
+        }
+      } else {
+        html += `<div class="empty">✅ No obvious duplication detected</div>`;
+      }
+      html += `</div>`;
+
+      // Release notes
+      const rn = releaseNotes;
+      let rnText = `### ${rn.title}\n\n`;
+      let rnHtml = `<h3>${esc(rn.title)}</h3>`;
+      const cats = [['features', 'Features'], ['fixes', 'Bug Fixes'], ['refactors', 'Improvements'], ['docs', 'Documentation']];
+      for (const [key, label] of cats) {
+        if (rn[key] && rn[key].length) {
+          rnHtml += `<div class="cat">${label}:</div><ul>${rn[key].map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+          rnText += `**${label}:**\n${rn[key].map((x) => `- ${x}`).join('\n')}\n\n`;
+        }
+      }
+      rnHtml += `<div class="meta-row">Files: ${analysis.total_files} · +${analysis.additions} / -${analysis.deletions}</div>`;
+      rnText += `Changed Files: ${analysis.total_files}\nLines Added: ${analysis.additions}\nLines Removed: ${analysis.deletions}`;
+      html += `<div class="section"><h2>📰 Release Notes
+        <button class="copy-btn" onclick='copyRN(${JSON.stringify(rnText)})'>Copy Markdown</button></h2>
+        <div class="release-notes">${rnHtml}</div></div>`;
+
+      document.getElementById('results').innerHTML = html;
+      document.getElementById('results').style.display = 'block';
+    }
+
+    function copyRN(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        event.target.textContent = 'Copied!';
+        setTimeout(() => (event.target.textContent = 'Copy Markdown'), 2000);
+      });
+    }
+
+    document.getElementById('prUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') runReview(); });
+  </script>
+</body>
+</html>

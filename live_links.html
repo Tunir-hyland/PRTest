@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR Review Agent - Live Links</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #0d1117;
+            color: #c9d1d9;
+        }
+        h1 {
+            color: #58a6ff;
+            border-bottom: 2px solid #30363d;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #79c0ff;
+            margin-top: 30px;
+        }
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .pr-link {
+            display: block;
+            background: #21262d;
+            border-left: 3px solid #58a6ff;
+            padding: 15px;
+            margin: 10px 0;
+            text-decoration: none;
+            color: #58a6ff;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .pr-link:hover {
+            background: #30363d;
+        }
+        .pr-link .title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .pr-link .repo {
+            color: #8b949e;
+            font-size: 14px;
+        }
+        .command {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            color: #79c0ff;
+            cursor: pointer;
+            position: relative;
+        }
+        .command:hover {
+            border-color: #58a6ff;
+        }
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover {
+            background: #2ea043;
+        }
+        .install-box {
+            background: #1f6feb;
+            color: white;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .install-box a {
+            color: white;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .badge {
+            display: inline-block;
+            background: #238636;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .badge.easy { background: #238636; }
+        .badge.medium { background: #d29922; }
+        .badge.advanced { background: #da3633; }
+    </style>
+</head>
+<body>
+    <h1>🔍 GitHub PR Review Agent - Live Links</h1>
+    
+    <div class="install-box">
+        <h2 style="margin-top: 0; color: white;">⚡ Quick Start</h2>
+        <p>1. <a href="ms-windows-store://pdp/?ProductId=9NRWMJP3717K">Install Python from Microsoft Store</a></p>
+        <p>2. Restart PowerShell</p>
+        <p>3. Click any PR link below or run the command</p>
+    </div>
+
+    <div class="section">
+        <h2>📋 Live PR Examples - Click to View</h2>
+        
+        <a href="https://github.com/microsoft/vscode/pull/200000" target="_blank" class="pr-link">
+            <div class="title">VS Code PR #200000 <span class="badge easy">Easy</span></div>
+            <div class="repo">microsoft/vscode - Small changes, good for first test</div>
+        </a>
+
+        <a href="https://github.com/facebook/react/pull/25000" target="_blank" class="pr-link">
+            <div class="title">React PR #25000 <span class="badge medium">Medium</span></div>
+            <div class="repo">facebook/react - TypeScript changes</div>
+        </a>
+
+        <a href="https://github.com/microsoft/vscode/pull/215000" target="_blank" class="pr-link">
+            <div class="title">VS Code PR #215000 <span class="badge medium">Medium</span></div>
+            <div class="repo">microsoft/vscode - Recent PR</div>
+        </a>
+
+        <a href="https://github.com/golang/go/pull/65000" target="_blank" class="pr-link">
+            <div class="title">Go Language PR #65000 <span class="badge medium">Medium</span></div>
+            <div class="repo">golang/go - Go language improvements</div>
+        </a>
+
+        <a href="https://github.com/tensorflow/tensorflow/pull/75000" target="_blank" class="pr-link">
+            <div class="title">TensorFlow PR #75000 <span class="badge advanced">Advanced</span></div>
+            <div class="repo">tensorflow/tensorflow - Large ML project</div>
+        </a>
+    </div>
+
+    <div class="section">
+        <h2>💻 Commands - Copy & Run in PowerShell</h2>
+        
+        <div class="command" onclick="copyCommand(this)">
+            python pr_review_agent.py https://github.com/microsoft/vscode/pull/200000
+            <button class="copy-btn">Copy</button>
+        </div>
+
+        <div class="command" onclick="copyCommand(this)">
+            python pr_review_agent.py https://github.com/facebook/react/pull/25000
+            <button class="copy-btn">Copy</button>
+        </div>
+
+        <div class="command" onclick="copyCommand(this)">
+            python pr_review_agent.py https://github.com/golang/go/pull/65000
+            <button class="copy-btn">Copy</button>
+        </div>
+
+        <h3 style="color: #79c0ff; margin-top: 30px;">For Private Repos:</h3>
+        
+        <div class="command" onclick="copyCommand(this)">
+            $env:GITHUB_TOKEN="your_token_here"
+            <button class="copy-btn">Copy</button>
+        </div>
+
+        <div class="command" onclick="copyCommand(this)">
+            python pr_review_agent.py https://github.com/your-org/your-repo/pull/123
+            <button class="copy-btn">Copy</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🎯 What You'll Get</h2>
+        <ul>
+            <li>✅ <strong>Summary</strong> - Files changed, lines added/removed</li>
+            <li>🐛 <strong>Bug Detection</strong> - Hardcoded credentials, debug statements, empty catches</li>
+            <li>💡 <strong>Improvements</strong> - Large functions, complex logic, modern syntax suggestions</li>
+            <li>📝 <strong>TODOs</strong> - All TODO, FIXME, HACK comments</li>
+            <li>📏 <strong>Large Methods</strong> - Methods over 50 lines flagged</li>
+            <li>🔄 <strong>Duplicates</strong> - Repeated code detection</li>
+            <li>📰 <strong>Release Notes</strong> - Auto-generated changelog</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🔑 Get GitHub Token (Optional)</h2>
+        <p>For private repos or higher rate limits:</p>
+        <a href="https://github.com/settings/tokens" target="_blank" style="color: #58a6ff;">
+            → Generate Token at GitHub Settings
+        </a>
+        <p style="color: #8b949e; font-size: 14px; margin-top: 10px;">
+            Select scope: <strong>repo</strong> (for private) or <strong>public_repo</strong> (for public only)
+        </p>
+    </div>
+
+    <script>
+        function copyCommand(element) {
+            const text = element.textContent.replace('Copy', '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = element.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#2ea043';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#238636';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
